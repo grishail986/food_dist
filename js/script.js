@@ -101,4 +101,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setClock('.timer', deadline)
 
+    // Modal: 
+    
+    let modalOpen = document.querySelectorAll('[data-open]'),
+        modal = document.querySelector('.modal'),
+        modalClose = document.querySelector('[data-close]')
+    
+    modalOpen.forEach(element => {
+        element.addEventListener('click', () => {
+            modal.style.display = 'block'
+            document.body.style.overflow = 'hidden'             // убираем прокрутку на заднем фоне 
+        })
+    })
+
+    modalClose.addEventListener('click', () => {
+        modal.style.display = ''
+        document.body.style.overflow = ''
+    })
+
+    modal.addEventListener('click', (e) => {
+        if (e.target == modal) {
+            modal.style.display = ''
+            document.body.style.overflow = ''
+        }
+    })
+
+    document.addEventListener("keydown", (e) => {
+        if (e.code == "Escape" && modal.style.display == 'block') {
+            modal.style.display = ''
+            document.body.style.overflow = ''
+        }
+    })
+    
 })
