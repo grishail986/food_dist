@@ -111,26 +111,44 @@ document.addEventListener('DOMContentLoaded', () => {
         element.addEventListener('click', () => {
             modal.style.display = 'block'
             document.body.style.overflow = 'hidden'             // убираем прокрутку на заднем фоне 
+            clearInterval(openTimer)                            // отменяем открытие через 20 сек
         })
     })
 
-    modalClose.addEventListener('click', () => {
+    modalClose.addEventListener('click', () => {                // закрываем при нажатии на 'close' 
         modal.style.display = ''
         document.body.style.overflow = ''
     })
 
-    modal.addEventListener('click', (e) => {
+    modal.addEventListener('click', (e) => {                    // закрываем при нажатии за пределами 
         if (e.target == modal) {
             modal.style.display = ''
             document.body.style.overflow = ''
         }
     })
 
-    document.addEventListener("keydown", (e) => {
-        if (e.code == "Escape" && modal.style.display == 'block') {
+    document.addEventListener("keydown", (e) => {                       // закрываем при нажатии на Esc 
+        if (e.code == "Escape" && modal.style.display == 'block') {     // если мы нажали на Esc и окно открыто 
             modal.style.display = ''
             document.body.style.overflow = ''
         }
     })
     
+    let openTimer =
+        setTimeout(() => {                                  // открываем через 20 сек после загрузки 
+            modal.style.display = 'block'
+            document.body.style.overflow = 'hidden'
+        }, 4000)
+    
+    function showModalByScroll() {
+        if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight -1) {
+            modal.style.display = 'block'
+            document.body.style.overflow = 'hidden'
+            clearInterval(openTimer)
+            window.removeEventListener('scroll', showModalByScroll)
+       }
+    }
+    
+    window.addEventListener('scroll', showModalByScroll)
+
 })
