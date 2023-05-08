@@ -189,5 +189,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let premium = new MenuCard("img/tabs/premium.jpg", "premium", 'Меню "Премиум"', 'В меню "Премиум" мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!', 560, '.menu .container')
     premium.render()
+    
+    // Forms: 
+    
+    let forms = document.querySelectorAll('form')
+    
+    let message = {                                     // хранилище сообщений, которые мы хотим показать  
+        loading: 'Загрузка',
+        succes: 'Спасибо, скоро мы с Вами свяжемся',
+        failture: 'Что-то пошло не так...'
+    }
+    
+    forms.forEach(elem => {                             // перебираем массив и для каждого элемента вызываем postData 
+        postData(elem)
+    })
 
+    function postData(form) {
+        form.addEventListener('submit', (e) => {                // submit срабатывает при отправке формы 
+            e.preventDefault()                                  // отменяем перезагрузку 
+
+            let statusMessage = document.createElement('div')   // создаем новый блок для оповещения пользователя 
+            statusMessage.classList.add('status')
+            statusMessage.textContent = message.loading         // как только начнется загрузка, показываем сообщение 
+            form.append(statusMessage)
+
+            let request = new XMLHttpRequest() 
+            request.open('POST', 'server.php')          // отправляем данные на сервер, адрес 
+            
+            request.setRequestHeader('Content-type', 'application/json')        // настраиваем заголовки 
+            let formData = new FormData(form)                                   // получаем данные из формы для передачи на сервер, аргумент: та форма, из которой нужно собрать данные 
+            
+            let object = {}
+
+            formData.forEach(function(value, key) {     // перебираем объект formData и помещаем все данные  в object 
+                object[key] = value
+            })
+
+            let json = JSON.stringify(object)           // переводим данные в формат JSON 
+            
+            request.send(json)                          // отправляем данные на сервер  
+
+            request.addEventListener('load', () => {            // отслеживаем отправку
+                if (request.status == 200) {
+                    console.log(request.response)
+                    statusMessage.textContent = message.succes      // показываем сообщение, если отправка прошла успешно 
+                    form.reset()                                    // очищаем форму 
+                    setTimeout(() => {                              // удаляем блок statusMessage со страницы 
+                        statusMessage.remove()
+                    }, 2000)
+                } else {
+                    statusMessage.textContent = message.failture
+                }
+            })
+        })
+    }
+
+    
 })
