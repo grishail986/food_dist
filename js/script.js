@@ -205,44 +205,64 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     function postData(form) {
-        form.addEventListener('submit', (e) => {                // submit срабатывает при отправке формы 
-            e.preventDefault()                                  // отменяем перезагрузку 
+        form.addEventListener('submit', (e) => {                    // submit срабатывает при отправке формы 
+            e.preventDefault()                                      // отменяем перезагрузку 
 
-            let statusMessage = document.createElement('div')   // создаем новый блок для оповещения пользователя 
+            let statusMessage = document.createElement('div')       // создаем новый блок для оповещения пользователя 
             statusMessage.classList.add('status')
-            statusMessage.textContent = message.loading         // как только начнется загрузка, показываем сообщение 
+            statusMessage.textContent = message.loading             // как только начнется загрузка, показываем сообщение 
             form.append(statusMessage)
 
-            let request = new XMLHttpRequest() 
-            request.open('POST', 'server.php')          // отправляем данные на сервер, адрес 
-            
-            request.setRequestHeader('Content-type', 'application/json')        // настраиваем заголовки 
-            let formData = new FormData(form)                                   // получаем данные из формы для передачи на сервер, аргумент: та форма, из которой нужно собрать данные 
+            let formData = new FormData(form)           // получаем данные из формы для передачи на сервер, аргумент: та форма, из которой нужно собрать данные 
             
             let object = {}
 
-            formData.forEach(function(value, key) {     // перебираем объект formData и помещаем все данные  в object 
+            formData.forEach(function(value, key) {     // перебираем объект formData и помещаем все данные в object 
                 object[key] = value
             })
 
-            let json = JSON.stringify(object)           // переводим данные в формат JSON 
-            
-            request.send(json)                          // отправляем данные на сервер  
+            // Используем fetch: 
 
-            request.addEventListener('load', () => {            // отслеживаем отправку
-                if (request.status == 200) {
-                    console.log(request.response)
-                    statusMessage.textContent = message.succes      // показываем сообщение, если отправка прошла успешно 
-                    form.reset()                                    // очищаем форму 
+            fetch('server.php', {                               // адрес сервера 
+                method: 'POST',                                 // отправляем данные на сервер 
+                headers: {                                      // настраиваем заголоки 
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(object)                    // переводим данные в формат JSON 
+            })
+            .then(data => data.text())                              // переводим ответ в текстовый формат 
+            .then(data => {                                         // обрабатывам then, т.е. успешное выполнение, data - это те данные, которые нам вернул сервер 
+                    console.log(data)
+                    statusMessage.textContent = message.succes      // показываем сообщение 
                     setTimeout(() => {                              // удаляем блок statusMessage со страницы 
                         statusMessage.remove()
                     }, 2000)
-                } else {
-                    statusMessage.textContent = message.failture
-                }
+            })
+            .catch(() => {                                          // если ошибка
+                statusMessage.textContent = message.failture
+            }).finally(() => {                                      // действия, который выполняются всегда 
+                form.reset()                                        // очищаем форму 
             })
         })
     }
+     
+    // Используем fetch, GET: 
 
+    // fetch('https://jsonplaceholder.typicode.com/todos/1')           // адрес сервера, возвращается промис, который обрабатываем, используя then 
+    //     .then(response => response.json())                          // получаем response, т.е. ответ в формате json, который fetch превращает в объект js, используя метод json и возвращает промис 
+    //     .then(json => console.log(json))                            // полученный объект выводим в консоль 
+    
+
+    // Используем fetch, POST: 
+
+    // fetch('https://jsonplaceholder.typicode.com/posts', {
+    //     method: 'POST',                                             // тип запроса 
+    //     body: JSON.stringify({name: 'Harry'}),                      // что отправляем: мы можем поместить как строку, так и объект, после чего переводим данные в JSON 
+    //     headers: {                                                  // заголовки 
+    //         'Content-type': 'application/json'
+    //     }
+    // })
+    //     .then(response => response.json())
+    //     .then(json => console.log(json))
     
 })
