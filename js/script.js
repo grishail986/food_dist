@@ -151,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.addEventListener('scroll', showModalByScroll)
 
-    
     // Используем классы для создания карточек меню: 
 
     class MenuCard {
@@ -181,15 +180,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let vegy = new MenuCard("img/tabs/vegy.jpg", "vegy", 'Меню "Фитнес"', 'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!', 229, '.menu .container')
-    vegy.render()
-
-    let post = new MenuCard("img/tabs/post.jpg", "post", 'Меню "Постное"', 'Меню "Постное" - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков', 430, '.menu .container')
-    post.render()
-
-    let premium = new MenuCard("img/tabs/premium.jpg", "premium", 'Меню "Премиум"', 'В меню "Премиум" мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!', 560, '.menu .container')
-    premium.render()
+    let getResource = async (url) => {
+        let res = await fetch(url)
+        
+        if (!res.ok) {                                                              // если запрос не ок, то сработает блок cach 
+            throw new Error(`Could not fetch ${url}, status: ${res.status}`)        // создаем исключение с помощью new Error и выбрасываем с помощью throw 
+        }
+        return await res.json()
+    }
     
+    getResource('http://localhost:3000/menu')                                                       // отправляем запрос на сервер и получаем массив с объектами menu 
+        .then(data => {
+            data.forEach(({img, altimg, title, descr, price}) => {                                  // перебираем массив, используем forEach и тот объект, который находитмся внутри деструктуризируем по свойствам: img, altimg и так далее 
+                new MenuCard(img, altimg, title, descr, price * 69, '.menu .container').render()    // передаем свойства объекта конструктору, который создает новую карточку 
+            })
+        })
+        
     // Forms: 
     
     let forms = document.querySelectorAll('form')
@@ -200,11 +206,26 @@ document.addEventListener('DOMContentLoaded', () => {
         failture: 'Что-то пошло не так...'
     }
     
-    forms.forEach(elem => {                             // перебираем массив и для каждого элемента вызываем postData 
-        postData(elem)
+    forms.forEach(elem => {                             // перебираем массив и для каждого элемента вызываем bindPostData 
+        bindPostData(elem)
     })
 
-    function postData(form) {
+    // postData настраивает наш запрос, с помощью fetch отправляет его на сервер, получает ответ и трансформирует его в json: 
+    // async: добавляем перед функцией, т.е. наша функция содержит асинхронный код, await: отмечаем строчки, выполнения которых нам нужно дождаться, т.е. асинхронный код станет похож на синхронный 
+    
+    let postData = async (url, data) => {                   // аргументы: адрес сервера, который передается дальше в fetch и даныые
+        let res = await fetch(url, {                        // await, указанный перед промисом запрещает интерпретатору перейти к следующей строчке кода, пока он не выполнится 
+            method: 'POST',                                 // отправляем данные на сервер 
+            headers: {                                      // настраиваем заголоки 
+                'Content-type': 'application/json'
+            },
+            body: data
+        })
+
+        return await res.json()                     // возвращаем промис в формате json 
+    }
+    
+    function bindPostData(form) {
         form.addEventListener('submit', (e) => {                    // submit срабатывает при отправке формы 
             e.preventDefault()                                      // отменяем перезагрузку 
 
@@ -213,24 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
             statusMessage.textContent = message.loading             // как только начнется загрузка, показываем сообщение 
             form.append(statusMessage)
 
-            let formData = new FormData(form)           // получаем данные из формы для передачи на сервер, аргумент: та форма, из которой нужно собрать данные 
+            let formData = new FormData(form)               // получаем данные из формы для передачи на сервер, аргумент: та форма, из которой нужно собрать данные 
             
-            let object = {}
+            let json = JSON.stringify(Object.fromEntries(formData.entries()))       // берем formData, которая собрала данные, превращаем ее в массив entries, чтобы мы могли рабоатть с ней, после в объект, после в JSON 
 
-            formData.forEach(function(value, key) {     // перебираем объект formData и помещаем все данные в object 
-                object[key] = value
-            })
-
-            // Используем fetch: 
-
-            fetch('server.php', {                               // адрес сервера 
-                method: 'POST',                                 // отправляем данные на сервер 
-                headers: {                                      // настраиваем заголоки 
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(object)                    // переводим данные в формат JSON 
-            })
-            .then(data => data.text())                              // переводим ответ в текстовый формат 
+            postData('http://localhost:3000/requests', json)        // вызываем postData, аргументы: url и данные, которые пойдут на сервер 
             .then(data => {                                         // обрабатывам then, т.е. успешное выполнение, data - это те данные, которые нам вернул сервер 
                     console.log(data)
                     statusMessage.textContent = message.succes      // показываем сообщение 
